@@ -6,20 +6,25 @@ contract Game {
     uint public countPlayer = 0;
     // Player[] public players; // NOT OPTIMAL, USE MAPPING INSTEAD
     mapping (address => Player) public players;
+    enum Level {Beginner, Intermediate, Advance}
 
     struct Player {
         address playerAddress;
         string name;
         uint age;
+        Level level;
         string sex;
     }
 
     function createPlayer(string memory name, uint age, string memory sex) public {
         // players.push(Player(name, age, sex));
-        players[msg.sender] = Player(msg.sender, name, age,sex);
+        players[msg.sender] = Player(msg.sender,name,age,Level.Beginner,sex);
         countPlayer += 1;
     }
 
-    // function getPlayer(f)
+
+    function getPlayerLevel(address player) view  public returns (Level) {
+        return players[player].level;
+    }
 
 }
