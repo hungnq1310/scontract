@@ -47,8 +47,8 @@ function App() {
         <div className='balance-view is-size-2'>
           Current balance: <strong>10 ETH</strong>
         </div>
-        <div className='button is-primary mr-5'>Donate</div>
-        <div className='button is-primary'>Withdraw</div>
+        <button className='button is-primary mr-5'>Donate</button>
+        <button className='button is-primary'>Withdraw</button>
         <div>
           <span>
             <strong>Account Address: </strong>
@@ -57,6 +57,7 @@ function App() {
             }
           </span>
         </div>
+
       </div>
     </div>
   );
