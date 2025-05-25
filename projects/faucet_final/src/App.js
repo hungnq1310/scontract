@@ -10,6 +10,8 @@ function App() {
     web3: null,
   })
 
+  const [account, setAccount] = useState(null);
+
   useEffect(() => {
     const loadProvider = async () => {
       const provider = await detectEthereumProvider();
@@ -27,7 +29,18 @@ function App() {
     }
     loadProvider();
   }, []);
-  
+
+  useEffect(() => {
+    const getAccount = async () => {
+      if (web3Api.web3) {
+        const accounts = await web3Api.web3.eth.getAccounts();
+        setAccount(accounts[0]);
+      }
+    }
+    web3Api.web3 && getAccount();
+  }
+  , [web3Api.web3]); 
+
   return (
     <div className='faucet-wrapper'>
       <div className='faucet'>
@@ -36,6 +49,14 @@ function App() {
         </div>
         <div className='button is-primary mr-5'>Donate</div>
         <div className='button is-primary'>Withdraw</div>
+        <div>
+          <span>
+            <strong>Account Address: </strong>
+            {
+              account ? account : 'Account not connected'
+            }
+          </span>
+        </div>
       </div>
     </div>
   );
