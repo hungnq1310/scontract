@@ -3,6 +3,8 @@ import './App.css';
 import Web3 from 'web3';
 import detectEthereumProvider from '@metamask/detect-provider';
 
+import { loadContract } from './load_contract';
+
 function App() {
   
   const [web3Api, setWeb3Api] = useState({
@@ -12,14 +14,19 @@ function App() {
 
   const [account, setAccount] = useState(null);
 
+  const [contract, setContract] = useState(null);
+
+
   useEffect(() => {
     const loadProvider = async () => {
       const provider = await detectEthereumProvider();
 
+      debugger;
+
       if (provider) {
         setWeb3Api({
           provider,
-          web3: new Web3(provider)
+          web3: new Web3(provider),
         });
       }
       else {
@@ -39,6 +46,16 @@ function App() {
     web3Api.web3 && getAccount();
   }
   , [web3Api.web3]); 
+
+  useEffect(() => {
+    const loadContractData = async () => {
+      const contract = await loadContract('Faucet', web3Api.provider);
+      debugger;
+      setContract(contract);
+    }
+    loadContractData();
+  }, [web3Api.web3]);
+  
 
   return (
     <div className='faucet-wrapper'>
