@@ -1,90 +1,94 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import Web3 from 'web3';
-import detectEthereumProvider from '@metamask/detect-provider';
-
-import { loadContract } from './load_contract';
+import { ethers } from 'ethers';
+import { loadContract, loadProvider } from './load_contract'; // Adjust the path as necessary
 
 function App() {
-  
-  const [web3Api, setWeb3Api] = useState({
-    provider: null,
-    web3: null,
-  })
-
+  const [web3Api, setWeb3Api] = useState({ provider: null });
   const [account, setAccount] = useState(null);
-
   const [contract, setContract] = useState(null);
+  const [balance, setBalance] = useState('0');
 
-
+  // Load Ethereum provider (MetaMask)
   useEffect(() => {
-    const loadProvider = async () => {
-      const provider = await detectEthereumProvider();
-
-      debugger;
-
+    const loadProvider2 = async () => {
+      const provider = loadProvider(window.ethereum);
       if (provider) {
-        setWeb3Api({
-          provider,
-          web3: new Web3(provider),
-        });
+        setWeb3Api({ provider });
+      } else {
+        console.error('Please install MetaMask');
       }
-      else {
-        console.error('Please install MetaMask or another Ethereum provider');
-      }
-    }
-    loadProvider();
+    };
+    loadProvider2();
   }, []);
 
+  // Connect wallet and fetch account
   useEffect(() => {
     const getAccount = async () => {
-      if (web3Api.web3) {
-        const accounts = await web3Api.web3.eth.getAccounts();
-        setAccount(accounts[0]);
+      if (web3Api.provider) {
+        const signer = await web3Api.provider.getSigner();
+        const accountAddress = await signer.getAddress(); 
+        setAccount(accountAddress);
       }
-    }
-    web3Api.web3 && getAccount();
-  }
-  , [web3Api.web3]); 
+    };
+    if (web3Api.provider) getAccount();
+  }, [web3Api.provider]);
 
+  // Load contract using embedded logic
   useEffect(() => {
-    const loadContractData = async () => {
-      const contract = await loadContract('Faucet', web3Api.provider);
-      debugger;
-      setContract(contract);
+
+    const initContract = async () => {
+      if (web3Api.provider) {
+        const contractInstance = await loadContract('Faucet', web3Api.provider);
+        setContract(contractInstance);
+      }
+    };
+
+    if (web3Api.provider) initContract();
+  }, [web3Api.provider]);
+
+  // Load contract balance
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (account && web3Api.provider) {
+
+        const balanceWei = await web3Api.provider.getBalance(account);
+        const balanceEth = ethers.formatEther(balanceWei);
+        setBalance(balanceEth);
+      }
+    };
+    if (account) fetchBalance();
+  }, [account, web3Api.provider]);
+
+  // Connect wallet manually
+  const connectWallet = async () => {
+    try {
+      const signer = await web3Api.provider.getSigner();
+      const address = await signer.getAddress();
+      setAccount(address);
+    } catch (err) {
+      console.error('Wallet connection failed', err);
     }
-    loadContractData();
-  }, [web3Api.web3]);
-  
+  };
 
   return (
-    <div className='faucet-wrapper'>
-      <div className='faucet'>
-        <div className='balance-view is-size-2'>
-          Current balance: <strong>10 ETH</strong>
+    <div className="faucet-wrapper">
+      <div className="faucet">
+        <div className="balance-view is-size-2">
+          Current balance: <strong>{balance} ETH</strong>
         </div>
-        <button className='button is-primary mr-5'>Donate</button>
-        <button className='button is-danger mr-5'>Withdraw</button>
-        <button className='button is-link mr-5'
-          onClick={async () => {
-            web3Api.provider.request({ method: 'eth_requestAccounts' })
-          }}
-        >
+        <button className="button is-primary mr-5" onClick={() => console.log('Donate logic here')}>Donate</button>
+        <button className="button is-danger mr-5" onClick={() => console.log('Withdraw logic here')}>Withdraw</button>
+        <button className="button is-link mr-5" onClick={connectWallet}>
           Connect Wallet
         </button>
         <div>
-          <span>
-            <strong>Account Address: </strong>
-            {
-              account ? account : 'Account not connected'
-            }
-          </span>
+          <strong>Account Address: </strong>
+          {account || 'Account not connected'}
         </div>
-
       </div>
     </div>
   );
 }
 
 export default App;
- 
