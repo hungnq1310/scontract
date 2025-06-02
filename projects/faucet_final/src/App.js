@@ -92,6 +92,16 @@ function App() {
     }
   }, [web3Api.provider, account])
 
+  // add withdraw
+  const withdraw = useCallback(async () => {
+    try {
+      await contract.withdraw(ethers.parseEther('1'), { from: account }); // Adjust the amount as needed
+      realoadEffect();
+    } catch (err) {
+      console.error('Withdrawal failed', err);
+    }
+  }, [web3Api.provider, account]);
+
   return (
     <div className="faucet-wrapper">
       <div className="faucet">
@@ -101,7 +111,9 @@ function App() {
         <button className="button is-primary mr-5" onClick={donate}>
           Donate
         </button>
-        <button className="button is-danger mr-5" onClick={() => console.log('Withdraw logic here')}>Withdraw</button>
+        <button className="button is-danger mr-5" onClick={withdraw}>
+          Withdraw
+        </button>
         <button className="button is-link mr-5" onClick={connectWallet}>
           Connect Wallet
         </button>
