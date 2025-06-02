@@ -1,20 +1,24 @@
 const Crud = artifacts.require("Crud");
 
 contract("Crud", () => {
+
+    before(async () => {
+        // Ensure the Crud contract is compiled and ready for testing
+        crudInstance = await Crud.deployed(); 
+
+    });
+
     it("should deploy the Crud contract", async () => {
-        const crudInstance = await Crud.deployed();
         assert(crudInstance, "Crud contract was not deployed successfully");
         assert(crudInstance.address, "Crud contract address is not set");
     });
 
     it("should create a new record", async () => {
-        const crudInstance = await Crud.deployed();
         const result = await crudInstance.createPlayer("Player 1");
         assert(result.receipt.status, "Record creation failed");
     });
 
     it("should read a record", async () => {
-        const crudInstance = await Crud.deployed();
         const result = await crudInstance.createPlayer("Player 1");
         assert(result.receipt.status, "Record creation failed");
 
@@ -23,7 +27,6 @@ contract("Crud", () => {
     });
 
     it("should update a record", async () => {
-        const crudInstance = await Crud.deployed();
         // First create a record to update
         const result = await crudInstance.createPlayer("Player 1");
         assert(result.receipt.status, "Record creation failed");
@@ -36,8 +39,6 @@ contract("Crud", () => {
     });
 
     it("should delete a record", async () => {
-        const crudInstance = await Crud.deployed();
-
         // Create and delete the record
         const result = await crudInstance.createPlayer("Player 1");
         assert(result.receipt.status, "Record creation failed");
