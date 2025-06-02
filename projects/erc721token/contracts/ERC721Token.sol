@@ -85,8 +85,43 @@ contract ERC721Token is ERC721 {
 
     // Operator mapping
     mapping(address => mapping(address => bool)) private operatorApprovals;
+    string public name;
+    string public symbol;
+    string public baseTokenURI;
+    mapping(uint256 => string) private tokenURIs;
 
+    // Contructor
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        string memory _baseTokenURI
+    ) public {
+        // Constructor logic can be added here if needed
+        name = _name;
+        symbol = _symbol;
+        baseTokenURI = _baseTokenURI;
+    }
+    
+    function tokenURI(uint256 _tokenId) external view returns (string memory) {
+        require(_tokenId > 0, "Token ID must be greater than zero");
+        return string(abi.encodePacked(baseTokenURI, _tokenId));
+    }
 
+    function _mint(address _to, uint256 _tokenId) internal {
+        // Check if the token already exists
+        require(idToOwner[_tokenId] == address(0), "Token already exists");
+        // Check if the recipient is a valid address
+        require(_to != address(0), "Cannot mint to zero address");
+
+        // Assign the token to the owner
+        idToOwner[_tokenId] = _to;
+        ownerToTokenCount[_to] += 1;
+
+        // Emit Transfer event
+        emit Transfer(address(0), _to, _tokenId);
+    }
+
+    // Functions
     function isContract(address _address) public view returns (bool) {
         uint256 codeSize;
         assembly {
