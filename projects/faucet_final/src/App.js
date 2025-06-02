@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import { ethers } from 'ethers';
-import { loadContract, loadProvider } from './load_contract'; // Adjust the path as necessary
+import { loadContract } from './load_contract'; // Adjust the path as necessary
 
 function App() {
   const [web3Api, setWeb3Api] = useState({ provider: null });
@@ -11,15 +11,19 @@ function App() {
 
   // Load Ethereum provider (MetaMask)
   useEffect(() => {
-    const loadProvider2 = async () => {
-      const provider = loadProvider(window.ethereum);
+    const loadProvider = async () => {
+      if (!window.ethereum) {
+        console.error('MetaMask is not installed');
+        return;
+      }
+      const provider = new ethers.BrowserProvider(window.ethereum);
       if (provider) {
         setWeb3Api({ provider });
       } else {
-        console.error('Please install MetaMask');
+        console.error('Failed to load provider');
       }
     };
-    loadProvider2();
+    loadProvider();
   }, []);
 
   // Connect wallet and fetch account
@@ -45,19 +49,18 @@ function App() {
     };
 
     if (web3Api.provider) initContract();
-  }, [web3Api.provider]);
+  }, [contract, web3Api.provider]);
 
   // Load contract balance
   useEffect(() => {
     const fetchBalance = async () => {
-      if (account && web3Api.provider) {
-
+      if (account) {
         const balanceWei = await web3Api.provider.getBalance(account);
         const balanceEth = ethers.formatEther(balanceWei);
         setBalance(balanceEth);
       }
     };
-    if (account) fetchBalance();
+    if (web3Api.provider) fetchBalance();
   }, [account, web3Api.provider]);
 
   // Connect wallet manually

@@ -12,7 +12,3 @@ export const loadContract = async (name, provider) => {
 
     return new ethers.Contract(address, abi, signer);
 }
-
-export const loadProvider = async (provider) => {
-    return new ethers.BrowserProvider(provider);
-}
