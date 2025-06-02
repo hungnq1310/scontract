@@ -13,6 +13,14 @@ function App() {
     setShouldReload(!shouldReload);
   };
 
+  const setAccountListener = () => {
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        setAccount(accounts[0]);
+      });
+    }
+  };
+
   // Load Ethereum provider (MetaMask)
   useEffect(() => {
     const loadProvider = async () => {
@@ -22,6 +30,7 @@ function App() {
       }
       const provider = new ethers.BrowserProvider(window.ethereum);
       if (provider) {
+        setAccountListener(provider);
         setWeb3Api({ provider });
       } else {
         console.error('Failed to load provider');
