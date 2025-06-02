@@ -6,24 +6,6 @@ library Address {
     
 }
 
-/// @dev Note: the ERC-165 identifier for this interface is 0x150b7a02.
-interface ERC721TokenReceiver {
-    /// @notice Handle the receipt of an NFT
-    /// @dev The ERC721 smart contract calls this function on the recipient
-    ///  after a `transfer`. This function MAY throw to revert and reject the
-    ///  transfer. Return of other than the magic value MUST result in the
-    ///  transaction being reverted.
-    ///  Note: the contract address is always the message sender.
-    /// @param _operator The address which called `safeTransferFrom` function
-    /// @param _from The address which previously owned the token
-    /// @param _tokenId The NFT identifier which is being transferred
-    /// @param _data Additional data with no specified format
-    /// @return `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
-    ///  unless throwing
-    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data) external returns(bytes4);
-}
-
-
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
@@ -130,6 +112,10 @@ contract ERC721Token is ERC721 {
     mapping(uint256 => address) private idToOwner;
     bytes4 internal constant MAGIC_ON_ERC721_RECEIVED = 0x150b7a02;
 
+    // Operator mapping
+    mapping(address => mapping(address => bool)) private operatorApprovals;
+
+
     function isContract(address _address) public view returns (bool) {
         uint256 codeSize;
         assembly {
@@ -180,24 +166,60 @@ contract ERC721Token is ERC721 {
 
         // Check if _to is a contract
         if (isContract(_to)) {
-            // bytes code
-            ERC721TokenReceiver(_to).onERC721Received(
-                msg.sender, // operator
-                _from, // from
-                _tokenId, // tokenId
-                data // data
+            // Call onERC721Received
+            (bool success, bytes memory returnData) = _to.call(
+                abi.encodeWithSelector(
+                    MAGIC_ON_ERC721_RECEIVED,
+                    msg.sender,
+                    _from,
+                    _tokenId,
+                    data
+                )
             );
-            // start bytes4
-            // require(
-            //     retval == MAGIC_ON_ERC721_RECEIVED,
-            //     "Transfer to non ERC721Receiver implementer"
-            // );
+            require(success && (returnData.length == 0 || abi.decode(returnData, (bytes4)) == MAGIC_ON_ERC721_RECEIVED), "Transfer to non ERC721Receiver implementer");
         }
-
     }
 
-    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data) external returns(bytes4){
+    ///@dev The zero address indicates there is no approved address.
+    ///  Throws unless `msg.sender` is the current NFT owner, or an authorized
+    ///  operator of the current owner.
+    function approve(address _approved, uint256 _tokenId) external payable override {
+        // Check if the token exists
+        require(idToOwner[_tokenId] != address(0), "Token does not exist");
+        // Check if the sender is the owner of the token
+        address owner = idToOwner[_tokenId];
+        require(owner == msg.sender, "Not the owner of the token");
+        // Set the approved address
+        idToOwner[_tokenId] = _approved;
+        // Emit the Approval event
+        emit Approval(owner, _approved, _tokenId);
+    }
 
+    /// @notice Enable or disable approval for a third party ("operator") to manage
+    function setApprovalForAll(address _operator, bool _approved) external override {
+        require(_operator != msg.sender, "Cannot approve to self");
+        // Set operator approval
+        operatorApprovals[msg.sender][_operator] = _approved;
+        // Emit event
+        emit ApprovalForAll(msg.sender, _operator, _approved);
+    }
+
+    /// @notice Get the approved address for a single NFT
+    function getApproved(uint256 _tokenId) external view override returns (address) {
+        // Return the approved address for the token
+        if (idToOwner[_tokenId] == address(0)) {
+            return address(0); // Token does not exist
+        }
+        return idToOwner[_tokenId];
+    }
+
+    /// @notice Query if an address is an authorized operator for another address
+    function isApprovedForAll(address _owner, address _operator) external view override returns (bool) {
+        // Check if the operator is approved for all
+        if (operatorApprovals[_owner][_operator]) {
+            return true;
+        }
+        return false; // Placeholder, as we don't store approvals in this simple implementation
     }
 
 }
