@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import { ethers } from 'ethers';
 import { loadContract } from './load_contract'; // Adjust the path as necessary
@@ -8,6 +8,10 @@ function App() {
   const [account, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
   const [balance, setBalance] = useState('0');
+  const [shouldReload, setShouldReload] = useState(false);
+  const realoadEffect = () => {
+    setShouldReload(!shouldReload);
+  };
 
   // Load Ethereum provider (MetaMask)
   useEffect(() => {
@@ -60,8 +64,8 @@ function App() {
         setBalance(balanceEth);
       }
     };
-    if (web3Api.provider) fetchBalance();
-  }, [account, web3Api.provider]);
+    fetchBalance();
+  }, [account, web3Api.provider, shouldReload]);
 
   // Connect wallet manually
   const connectWallet = async () => {
@@ -74,13 +78,29 @@ function App() {
     }
   };
 
+  // add donate
+  const donate = useCallback(async () => {
+    try {
+      await contract.addFunds( {
+        from : account,
+        value: ethers.parseEther('1') // Adjust the amount as needed
+      });
+      realoadEffect();
+    }
+    catch (err) {
+      console.error('Donation failed', err);
+    }
+  }, [web3Api.provider, account])
+
   return (
     <div className="faucet-wrapper">
       <div className="faucet">
         <div className="balance-view is-size-2">
           Current balance: <strong>{balance} ETH</strong>
         </div>
-        <button className="button is-primary mr-5" onClick={() => console.log('Donate logic here')}>Donate</button>
+        <button className="button is-primary mr-5" onClick={donate}>
+          Donate
+        </button>
         <button className="button is-danger mr-5" onClick={() => console.log('Withdraw logic here')}>Withdraw</button>
         <button className="button is-link mr-5" onClick={connectWallet}>
           Connect Wallet
